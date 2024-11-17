@@ -1,0 +1,537 @@
+[
+  {
+    "start": 0.0,
+    "end": 3.359999895095825,
+    "text": " All right, let's get started."
+  },
+  {
+    "start": 3.359999895095825,
+    "end": 4.199999809265137,
+    "text": " Welcome, everybody."
+  },
+  {
+    "start": 4.199999809265137,
+    "end": 8.680000305175781,
+    "text": " My name is Nate, and I'm going to be talking about OAuth and OpenID Connect today."
+  },
+  {
+    "start": 8.680000305175781,
+    "end": 11.079999923706055,
+    "text": " I work at a company called Okta up in San Francisco, and I"
+  },
+  {
+    "start": 11.079999923706055,
+    "end": 18.920000076293945,
+    "text": " do a lot of web security stuff and work on just making it easier for developers to do authentication and authorization in their applications."
+  },
+  {
+    "start": 18.920000076293945,
+    "end": 22.520000457763672,
+    "text": " And so through talking to a lot of developers, I've"
+  },
+  {
+    "start": 22.520000457763672,
+    "end": 25.799999237060547,
+    "text": " noticed that a lot of people have heard of these protocols,"
+  },
+  {
+    "start": 25.799999237060547,
+    "end": 28.360000610351562,
+    "text": " OAuth and OpenID Connect, but a lot of people don't really"
+  },
+  {
+    "start": 28.360000610351562,
+    "end": 30.68000030517578,
+    "text": " know what they are, or maybe they understand them a little"
+  },
+  {
+    "start": 30.68000030517578,
+    "end": 32.959999084472656,
+    "text": " bit, but not really understand them fully."
+  },
+  {
+    "start": 32.959999084472656,
+    "end": 37.91999816894531,
+    "text": " So just as a quick poll, who here has at least heard of OpenID Connect or OAuth?"
+  },
+  {
+    "start": 37.91999816894531,
+    "end": 38.720001220703125,
+    "text": " Awesome."
+  },
+  {
+    "start": 38.720001220703125,
+    "end": 42.0,
+    "text": " What about, would you feel like you're an expert on it,"
+  },
+  {
+    "start": 42.0,
+    "end": 45.880001068115234,
+    "text": " or you really understand the protocol at a pretty good level?"
+  },
+  {
+    "start": 45.880001068115234,
+    "end": 48.68000030517578,
+    "text": " Not me, not me."
+  },
+  {
+    "start": 48.68000030517578,
+    "end": 51.2400016784668,
+    "text": " These are pretty difficult protocols to understand,"
+  },
+  {
+    "start": 51.2400016784668,
+    "end": 54.0,
+    "text": " especially for some reasons that we'll go into in a second,"
+  },
+  {
+    "start": 54.0,
+    "end": 57.63999938964844,
+    "text": "there's a lot of confusing information about them online."
+  },
+  {
+    "start": 57.63999938964844,
+    "end": 60.36000061035156,
+    "text": " So my goal with this talk is to just cut through the"
+  },
+  {
+    "start": 60.36000061035156,
+    "end": 63.31999969482422,
+    "text": " jargon, cut through the technical speak, and try to"
+  },
+  {
+    "start": 63.31999969482422,
+    "end": 66.55999755859375,
+    "text": " explain how these protocols work just in plain language,"
+  },
+  {
+    "start": 66.55999755859375,
+    "end": 68.55999755859375,
+    "text": " try to just make it really easy to understand."
+  },
+  {
+    "start": 68.55999755859375,
+    "end": 71.4000015258789,
+    "text": " And we are going to get into some of the technical stuff"
+  },
+  {
+    "start": 71.4000015258789,
+    "end": 73.95999908447266,
+    "text": " today, because we have a little bit of extra time, but"
+  },
+  {
+    "start": 73.95999908447266,
+    "end": 75.23999786376953,
+    "text": " if you have any questions at the end, feel"
+  },
+  {
+    "start": 75.23999786376953,
+    "end": 76.5999984741211,
+    "text": " free to ask them."
+  },
+  {
+    "start": 76.5999984741211,
+    "end": 79.83999633789062,
+    "text": " I'll try to make it as easy to understand as I can."
+  },
+  {
+    "start": 79.83999633789062,
+    "end": 82.63999938964844,
+    "text": " So what we're going to do first is we're going to start"
+  },
+  {
+    "start": 82.63999938964844,
+    "end": 85.44000244140625,
+    "text": " with a little bit of history, because it's helpful to set"
+  },
+  {
+    "start": 85.44000244140625,
+    "end": 88.04000091552734,
+    "text": " the stage and understand where these protocols came"
+  },
+  {
+    "start": 88.04000091552734,
+    "end": 90.04000091552734,
+    "text": " from and why they were built the way they are."
+  },
+  {
+    "start": 90.04000091552734,
+    "end": 93.16000366210938,
+    "text": " And that'll inform how we understand how they're"
+  },
+  {
+    "start": 93.16000366210938,
+    "end": 94.5199966430664,
+    "text": " supposed to be used today."
+  },
+  {
+    "start": 94.5199966430664,
+    "end": 97.31999969482422,
+    "text": " All right, so if you're interested in the slides or"
+  },
+  {
+    "start": 97.31999969482422,
+    "end": 99.63999938964844,
+    "text": " the video from this talk, it'll be available on my"
+  },
+  {
+    "start": 99.63999938964844,
+    "end": 102.4000015258789,
+    "text": " Twitter at the end, at nbarbitini."
+  },
+  {
+    "start": 102.4000015258789,
+    "end": 104.55999755859375,
+    "text": " And if you want to follow my whole team, we tweet out a lot"
+  },
+  {
+    "start": 104.55999755859375,
+    "end": 105.5199966430664,
+    "text": " of good content like this."
+  },
+  {
+    "start": 105.5199966430664,
+    "end": 107.55999755859375,
+    "text": " You can follow at octodev."
+  },
+  {
+    "start": 107.55999755859375,
+    "end": 109.5999984741211,
+    "text": " All right, so let's get started."
+  },
+  {
+    "start": 109.5999984741211,
+    "end": 111.95999908447266,
+    "text": " Before we even talk about OAuth and OpenID Connect, I"
+  },
+  {
+    "start": 112.0,
+    "end": 116.36000061035156,
+    "text": " want to set the stage and talk about the most basic type of"
+  },
+  {
+    "start": 116.36000061035156,
+    "end": 119.19999694824219,
+    "text": " authentication you could do on the web, the simplest case."
+  },
+  {
+    "start": 119.19999694824219,
+    "end": 121.76000213623047,
+    "text": " I'm calling this simple login, or sometimes it's called"
+  },
+  {
+    "start": 121.76000213623047,
+    "end": 123.87999725341797,
+    "text": " forms authentication."
+  },
+  {
+    "start": 123.87999725341797,
+    "end": 126.95999908447266,
+    "text": " And this is just a simple example of where you have an"
+  },
+  {
+    "start": 126.95999908447266,
+    "end": 128.8800048828125,
+    "text": " email and password or a username and password"
+  },
+  {
+    "start": 128.8800048828125,
+    "end": 130.47999572753906,
+    "text": " form on a website."
+  },
+  {
+    "start": 130.47999572753906,
+    "end": 133.24000549316406,
+    "text": " The user enters their information, and your back end"
+  },
+  {
+    "start": 133.24000549316406,
+    "end": 136.44000244140625,
+    "text": " website code is going to go hit a database somewhere, look"
+  },
+  {
+    "start": 136.44000244140625,
+    "end": 139.60000610351562,
+    "text": " up, see if that username and password actually exists."
+  },
+  {
+    "start": 139.60000610351562,
+    "end": 144.27999877929688,
+    "text": " If so, verify that the password matches, hopefully"
+  },
+  {
+    "start": 144.27999877929688,
+    "end": 146.67999267578125,
+    "text": " doing password hashing to make sure we're not storing the"
+  },
+  {
+    "start": 146.67999267578125,
+    "end": 148.9600067138672,
+    "text": " password in plain text, looking up that"
+  },
+  {
+    "start": 148.9600067138672,
+    "end": 149.8800048828125,
+    "text": " user's information."
+  },
+  {
+    "start": 149.8800048828125,
+    "end": 152.9199981689453,
+    "text": " And then usually what would happen is the application"
+  },
+  {
+    "start": 152.9199981689453,
+    "end": 155.72000122070312,
+    "text": " would drop a cookie into the web browser to keep track of"
+  },
+  {
+    "start": 155.72000122070312,
+    "end": 158.32000732421875,
+    "text": " the user and say, hey, this user already logged in."
+  },
+  {
+    "start": 158.32000732421875,
+    "end": 160.1999969482422,
+    "text": " They're associated with this particular"
+  },
+  {
+    "start": 160.1999969482422,
+    "end": 162.44000244140625,
+    "text": " session ID or something."
+  },
+  {
+    "start": 162.44000244140625,
+    "end": 164.9199981689453,
+    "text": " And we've logged the user in."
+  },
+  {
+    "start": 164.9199981689453,
+    "end": 167.47999572753906,
+    "text": " Now, this is basically how authentication"
+  },
+  {
+    "start": 167.47999572753906,
+    "end": 168.39999389648438,
+    "text": " started out on the web."
+  },
+  {
+    "start": 169.1199951171875,
+    "end": 172.0399932861328,
+    "text": " A lot of people, including myself, cut their teeth on"
+  },
+  {
+    "start": 172.0399932861328,
+    "end": 175.9600067138672,
+    "text": " building this type of thing, like in PHP, or in my case,"
+  },
+  {
+    "start": 175.9600067138672,
+    "end": 178.9199981689453,
+    "text": " classic ASP, some really, really bad code that I never"
+  },
+  {
+    "start": 178.9199981689453,
+    "end": 181.47999572753906,
+    "text": " want to look at again from like 15 years ago."
+  },
+  {
+    "start": 181.47999572753906,
+    "end": 184.44000244140625,
+    "text": " But you can do this on your web server if you want."
+  },
+  {
+    "start": 187.75999450683594,
+    "end": 190.47999572753906,
+    "text": " The industry has been moving a little bit away from doing"
+  },
+  {
+    "start": 190.47999572753906,
+    "end": 193.75999450683594,
+    "text": " this in a homegrown way, and I'll explain why."
+  },
+  {
+    "start": 193.75999450683594,
+    "end": 196.39999389648438,
+    "text": " So this doesn't have anything to do with OAuth yet, but I"
+  },
+  {
+    "start": 196.39999389648438,
+    "end": 199.16000366210938,
+    "text": " wanted to set the stage for explaining what we're going to"
+  },
+  {
+    "start": 199.16000366210938,
+    "end": 199.9199981689453,
+    "text": " be comparing against."
+  },
+  {
+    "start": 199.9199981689453,
+    "end": 201.8000030517578,
+    "text": " This is the most simple use case."
+  },
+  {
+    "start": 201.8000030517578,
+    "end": 205.32000732421875,
+    "text": " There's a couple of downsides of doing authentication inside"
+  },
+  {
+    "start": 205.32000732421875,
+    "end": 208.63999938964844,
+    "text": " of your app in a homegrown way, like I just described."
+  },
+  {
+    "start": 208.63999938964844,
+    "end": 211.55999755859375,
+    "text": " The big downside is that when you do it that way, you're on"
+  },
+  {
+    "start": 211.55999755859375,
+    "end": 214.27999877929688,
+    "text": " the hook for all of the security and maintenance that"
+  },
+  {
+    "start": 214.27999877929688,
+    "end": 216.72000122070312,
+    "text": " goes around with maintaining an authentication system."
+  },
+  {
+    "start": 216.72000122070312,
+    "end": 219.52000427246094,
+    "text": " So if it's just your server code hitting a database"
+  },
+  {
+    "start": 219.52000427246094,
+    "end": 222.63999938964844,
+    "text": " somewhere and making sure the user's password matches, then"
+  },
+  {
+    "start": 222.63999938964844,
+    "end": 226.0399932861328,
+    "text": " you have to be aware of when the best practices and the"
+  },
+  {
+    "start": 226.0399932861328,
+    "end": 228.83999633789062,
+    "text": " security industry change around password hashing or"
+  },
+  {
+    "start": 228.83999633789062,
+    "end": 231.9199981689453,
+    "text": " storing user information securely, or you have HIPAA"
+  },
+  {
+    "start": 231.9199981689453,
+    "end": 234.67999267578125,
+    "text": " coming down the wire, or now GDPR coming down the wire."
+  },
+  {
+    "start": 234.67999267578125,
+    "end": 236.83999633789062,
+    "text": " You have to be aware of how these things change."
+  },
+  {
+    "start": 236.83999633789062,
+    "end": 239.36000061035156,
+    "text": " And there's quite a bit of maintenance involved in making"
+  },
+  {
+    "start": 239.36000061035156,
+    "end": 242.52000427246094,
+    "text": " sure that your authentication system is still working."
+  },
+  {
+    "start": 242.52000427246094,
+    "end": 245.75999450683594,
+    "text": " So at risk of giving away the punch line just a little bit,"
+  },
+  {
+    "start": 245.75999450683594,
+    "end": 249.0399932861328,
+    "text": " OAuth 2.0 and OpenID Connect are some industry best"
+  },
+  {
+    "start": 249.0399932861328,
+    "end": 252.0800018310547,
+    "text": " practices that the industry as a whole is moving towards to"
+  },
+  {
+    "start": 252.0800018310547,
+    "end": 254.83999633789062,
+    "text": " try to make this problem a little bit easier to solve."
+  },
+  {
+    "start": 254.8800048828125,
+    "end": 256.239990234375,
+    "text": " But I'm getting a little ahead of myself."
+  },
+  {
+    "start": 256.239990234375,
+    "end": 258.67999267578125,
+    "text": " So let's explain how these protocols work and"
+  },
+  {
+    "start": 258.67999267578125,
+    "end": 260.0799865722656,
+    "text": " what they are first."
+  },
+  {
+    "start": 260.0799865722656,
+    "end": 262.0400085449219,
+    "text": " And then I'll come back to that."
+  },
+  {
+    "start": 262.0400085449219,
+    "end": 264.6400146484375,
+    "text": " So I want to acknowledge that there's a ton of really"
+  },
+  {
+    "start": 264.6400146484375,
+    "end": 267.6000061035156,
+    "text": " confusing information about OAuth online."
+  },
+  {
+    "start": 267.6000061035156,
+    "end": 270.760009765625,
+    "text": " If you try to Google what is OAuth, or how does OpenID"
+  },
+  {
+    "start": 270.760009765625,
+    "end": 273.8399963378906,
+    "text": " Connect work, or how do I use OAuth 2.0, you're probably"
+  },
+  {
+    "start": 273.8399963378906,
+    "end": 275.9599914550781,
+    "text": " going to find extremely confusing information."
+  },
+  {
+    "start": 275.9599914550781,
+    "end": 278.44000244140625,
+    "text": " When I started learning about this a couple years ago when I"
+  },
+  {
+    "start": 278.44000244140625,
+    "end": 281.32000732421875,
+    "text": " got into the web security space, it was really confusing"
+  },
+  {
+    "start": 281.32000732421875,
+    "end": 282.0799865722656,
+    "text": " for me too."
+  },
+  {
+    "start": 282.0799865722656,
+    "end": 284.5199890136719,
+    "text": " And I still get confused sometimes, even today."
+  },
+  {
+    "start": 284.55999755859375,
+    "end": 286.20001220703125,
+    "text": " I think the guys who wrote the spec still"
+  },
+  {
+    "start": 286.20001220703125,
+    "end": 287.44000244140625,
+    "text": " get confused as well."
+  }
+]

@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Transcription Player</title>
+        <style>
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }
+
+            th,
+            td {
+                border: 1px solid #ddd;
+                padding: 12px;
+                text-align: left;
+            }
+
+            th {
+                background-color: #f4f4f4;
+            }
+
+            .time-cell {
+                cursor: pointer;
+                width: 100px;
+                background-color: #f8f8f8;
+            }
+
+            .text-cell {
+                cursor: pointer;
+            }
+
+            .hidden-text {
+                color: transparent;
+                background-color: #eee;
+            }
+
+            tr:hover {
+                background-color: #f5f5f5;
+            }
+
+            .playing {
+                background-color: #e3f2fd !important; /* Light blue */
+            }
+
+            .playing .time-cell {
+                background-color: #bbdefb !important; /* Slightly darker blue */
+            }
+
+            .playing .text-cell {
+                background-color: #e3f2fd !important;
+            }
+
+            .playing.paused {
+                background-color: #fff3e0 !important; /* Light orange */
+            }
+
+            .playing.paused .time-cell {
+                background-color: #ffe0b2 !important; /* Slightly darker orange */
+            }
+
+            .playing.paused .text-cell {
+                background-color: #fff3e0 !important;
+            }
+
+            .audio-player {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background: #f4f4f4;
+                padding: 10px;
+                border-top: 1px solid #ddd;
+            }
+            .status-panel {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                font-family: monospace;
+                z-index: 1000;
+            }
+
+            .status-item {
+                margin: 5px 0;
+            }
+
+            .highlight {
+                background-color: #ffff00;
+                color: black;
+                transition: background-color 0.3s;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="status-panel">
+            <div class="status-item">
+                Loop: <span id="loopStatus">Off</span>
+            </div>
+            <div class="status-item">Start: <span id="loopStart">-</span></div>
+            <div class="status-item">End: <span id="loopEnd">-</span></div>
+            <div class="status-item">
+                Speed: <span id="speedStatus">1.0x</span>
+            </div>
+        </div>
+        <table id="transcriptionTable">
+            <thead>
+                <tr>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Text</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="audio-player">
+            <audio id="audioPlayer" controls preload="auto">
+                <source src="audio.mp3" type="audio/mpeg" />
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+
+        <script>
+            const audioPlayer = document.getElementById("audioPlayer");
+            const tableBody = document.querySelector(
+                "#transcriptionTable tbody",
+            );
+            let currentRow = null;
+            let audioLoaded = false;
+            let loopStart = null;
+            let loopEnd = null;
+            let isLooping = false;
+            const loopStatusElement = document.getElementById("loopStatus");
+            const loopStartElement = document.getElementById("loopStart");
+            const loopEndElement = document.getElementById("loopEnd");
+            const speedStatus = document.getElementById("speedStatus");
+            const SPEED_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+            let currentSpeedIndex = 2; // Start at 1.0x (index 2)
+
+            audioPlayer.addEventListener("loadeddata", () => {
+                audioLoaded = true;
+                console.log("Audio loaded successfully");
+            });
+
+            fetch("transcription.json")
+                .then((response) => response.json())
+                .then((data) => {
+                    data.forEach((segment) => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                        <td class="time-cell">${formatTime(segment.start)}</td>
+                        <td class="time-cell">${formatTime(segment.end)}</td>
+                        <td class="text-cell hidden-text">${segment.text}</td>
+                    `;
+
+                        row.dataset.startTime = segment.start;
+                        row.dataset.endTime = segment.end;
+
+                        // Add click handler for start time cell
+                        const startTimeCell =
+                            row.querySelector("td:first-child");
+                        startTimeCell.addEventListener("click", (e) => {
+                            e.stopPropagation(); // Prevent row click event
+                            if (!audioLoaded) return;
+                            playSegment(row, segment.start, segment.end);
+                        });
+
+                        // Add click handler for text cell
+                        const textCell = row.querySelector(".text-cell");
+                        textCell.addEventListener("click", () => {
+                            toggleText(textCell);
+                        });
+
+                        tableBody.appendChild(row);
+                    });
+                });
+
+            function toggleText(cell) {
+                cell.classList.toggle("hidden-text");
+            }
+
+            async function playSegment(row, startTime, endTime) {
+                resetLoop(); // Reset loop when playing a new segment
+                try {
+                    await audioPlayer.pause();
+
+                    if (currentRow) {
+                        currentRow.classList.remove("playing", "paused");
+                    }
+                    currentRow = row;
+                    row.classList.add("playing");
+
+                    audioPlayer.currentTime = startTime;
+
+                    await new Promise((resolve) => {
+                        const seekHandler = () => {
+                            audioPlayer.removeEventListener(
+                                "seeked",
+                                seekHandler,
+                            );
+                            resolve();
+                        };
+                        audioPlayer.addEventListener("seeked", seekHandler);
+                    });
+
+                    await audioPlayer.play();
+                    row.classList.remove("paused");
+
+                    console.log("Successfully started playback at:", startTime);
+
+                    const duration = (endTime - startTime) * 1000;
+                    setTimeout(() => {
+                        if (row === currentRow) {
+                            if (audioPlayer.paused) {
+                                row.classList.add("paused");
+                            }
+                        }
+                    }, duration);
+                } catch (error) {
+                    console.error("Error during playback:", error);
+                    row.classList.remove("playing", "paused");
+                    currentRow = null;
+                }
+            }
+
+            let lastUpdateTime = 0;
+            audioPlayer.addEventListener("timeupdate", () => {
+                if (Date.now() - lastUpdateTime < 100) return;
+                lastUpdateTime = Date.now();
+
+                const currentTime = audioPlayer.currentTime;
+
+                // Handle looping
+                if (isLooping && loopEnd !== null && currentTime >= loopEnd) {
+                    audioPlayer.currentTime = loopStart;
+                    console.log("Loop: returning to start");
+                }
+
+                const rows = tableBody.getElementsByTagName("tr");
+
+                Array.from(rows).forEach((row) => {
+                    const startTime = parseFloat(row.dataset.startTime);
+                    const endTime = parseFloat(row.dataset.endTime);
+
+                    if (currentTime >= startTime && currentTime < endTime) {
+                        if (currentRow !== row) {
+                            if (currentRow) {
+                                currentRow.classList.remove(
+                                    "playing",
+                                    "paused",
+                                );
+                            }
+                            currentRow = row;
+                            row.classList.add("playing");
+                            if (audioPlayer.paused) {
+                                row.classList.add("paused");
+                            }
+                            row.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                                inline: "nearest",
+                            });
+                        }
+                    } else {
+                        if (row === currentRow) {
+                            row.classList.remove("playing", "paused");
+                            currentRow = null;
+                        }
+                    }
+                });
+            });
+
+            function formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = Math.floor(seconds % 60);
+                return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+            }
+
+            audioPlayer.addEventListener("error", (e) => {
+                console.error("Audio error:", e);
+                audioLoaded = false;
+            });
+
+            document.addEventListener("keydown", (event) => {
+                if (event.code === "Space") {
+                    event.preventDefault();
+
+                    if (audioPlayer.paused) {
+                        audioPlayer.play();
+                        if (currentRow) {
+                            currentRow.classList.remove("paused");
+                        }
+                    } else {
+                        audioPlayer.pause();
+                        if (currentRow) {
+                            currentRow.classList.add("paused");
+                        }
+                    }
+
+                    console.log(
+                        audioPlayer.paused
+                            ? "Playback paused"
+                            : "Playback resumed",
+                    );
+                }
+                // Handle [ key for loop start
+                else if (event.key === "[") {
+                    loopStart = audioPlayer.currentTime;
+                    loopStartElement.textContent = formatTime(loopStart);
+                    updateLoopStatus();
+                    console.log("Loop start set to:", formatTime(loopStart));
+                }
+                // Handle ] key for loop end
+                else if (event.key === "]") {
+                    loopEnd = audioPlayer.currentTime;
+                    loopEndElement.textContent = formatTime(loopEnd);
+                    updateLoopStatus();
+                    console.log("Loop end set to:", formatTime(loopEnd));
+                } else if (event.key === "Escape") {
+                    // Add this to the keydown handler
+                    resetLoop();
+                    console.log("Loop cleared");
+                } else if (event.key === "<" || event.key === ",") {
+                    decreaseSpeed();
+                } else if (event.key === ">" || event.key === ".") {
+                    increaseSpeed();
+                } else if (event.code === "ArrowLeft") {
+                    event.preventDefault();
+                    playPreviousSegment();
+                } else if (event.code === "ArrowRight") {
+                    event.preventDefault();
+                    playNextSegment();
+                }
+            });
+
+            function decreaseSpeed() {
+                if (currentSpeedIndex > 0) {
+                    currentSpeedIndex--;
+                    updatePlaybackSpeed();
+                }
+            }
+
+            function increaseSpeed() {
+                if (currentSpeedIndex < SPEED_STEPS.length - 1) {
+                    currentSpeedIndex++;
+                    updatePlaybackSpeed();
+                }
+            }
+
+            function playPreviousSegment() {
+                if (!currentRow) return;
+
+                const previousRow = currentRow.previousElementSibling;
+                if (previousRow) {
+                    const startTime = parseFloat(previousRow.dataset.startTime);
+                    const endTime = parseFloat(previousRow.dataset.endTime);
+                    playSegment(previousRow, startTime, endTime);
+                }
+            }
+
+            function playNextSegment() {
+                if (!currentRow) {
+                    // If no segment is playing, play the first segment
+                    const firstRow = tableBody.firstElementChild;
+                    if (firstRow) {
+                        const startTime = parseFloat(
+                            firstRow.dataset.startTime,
+                        );
+                        const endTime = parseFloat(firstRow.dataset.endTime);
+                        playSegment(firstRow, startTime, endTime);
+                    }
+                    return;
+                }
+
+                const nextRow = currentRow.nextElementSibling;
+                if (nextRow) {
+                    const startTime = parseFloat(nextRow.dataset.startTime);
+                    const endTime = parseFloat(nextRow.dataset.endTime);
+                    playSegment(nextRow, startTime, endTime);
+                }
+            }
+
+            function updatePlaybackSpeed() {
+                const newSpeed = SPEED_STEPS[currentSpeedIndex];
+                audioPlayer.playbackRate = newSpeed;
+                speedStatus.textContent = `${newSpeed.toFixed(2)}x`;
+
+                // Visual feedback
+                speedStatus.classList.add("highlight");
+                setTimeout(() => {
+                    speedStatus.classList.remove("highlight");
+                }, 200);
+
+                console.log(`Playback speed: ${newSpeed}x`);
+            }
+
+            updatePlaybackSpeed();
+
+            function resetSpeed() {
+                currentSpeedIndex = 2; // Reset to 1.0x
+                updatePlaybackSpeed();
+            }
+
+            function flashElement(element) {
+                element.classList.add("highlight");
+                setTimeout(() => {
+                    element.classList.remove("highlight");
+                }, 200);
+            }
+
+            function updateLoopStatus() {
+                if (loopStart !== null && loopEnd !== null) {
+                    if (loopStart < loopEnd) {
+                        isLooping = true;
+                        loopStatusElement.textContent = "On";
+                        flashElement(loopStatusElement);
+                    } else {
+                        isLooping = false;
+                        loopStart = null;
+                        loopEnd = null;
+                        loopStatusElement.textContent = "Off";
+                        loopStartElement.textContent = "-";
+                        loopEndElement.textContent = "-";
+                        flashElement(loopStatusElement);
+                    }
+                } else {
+                    isLooping = false;
+                    loopStatusElement.textContent = "Off";
+                }
+            }
+
+            // Add this to handle spacebar press in form elements
+            document.addEventListener("keypress", (event) => {
+                if (
+                    event.code === "Space" &&
+                    (event.target.tagName === "INPUT" ||
+                        event.target.tagName === "TEXTAREA")
+                ) {
+                    // Allow spacebar in input fields
+                    event.stopPropagation();
+                    return;
+                }
+            });
+
+            function updateCurrentSegmentHighlight() {
+                const currentTime = audioPlayer.currentTime;
+                const rows = tableBody.getElementsByTagName("tr");
+
+                Array.from(rows).forEach((row) => {
+                    const startTime = parseFloat(row.dataset.startTime);
+                    const endTime = parseFloat(row.dataset.endTime);
+
+                    if (currentTime >= startTime && currentTime < endTime) {
+                        if (currentRow) {
+                            currentRow.classList.remove("playing");
+                        }
+                        currentRow = row;
+                        row.classList.add("playing");
+                    }
+                });
+            }
+
+            // Add styles for the loop status display
+            const style = document.createElement("style");
+            style.textContent = `
+                #loopStatus, #loopStart, #loopEnd {
+                    font-family: monospace;
+                }
+            `;
+            document.head.appendChild(style);
+
+            // Add reset loop function
+            function resetLoop() {
+                isLooping = false;
+                loopStart = null;
+                loopEnd = null;
+                loopStatusElement.textContent = "Off";
+                loopStartElement.textContent = "-";
+                loopEndElement.textContent = "-";
+            }
+
+            audioPlayer.addEventListener("pause", () => {
+                if (currentRow) {
+                    currentRow.classList.add("paused");
+                }
+            });
+
+            // Add play event listener
+            audioPlayer.addEventListener("play", () => {
+                if (currentRow) {
+                    currentRow.classList.remove("paused");
+                }
+            });
+        </script>
+    </body>
+</html>
